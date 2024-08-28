@@ -1,0 +1,289 @@
+---
+title: "Final Project B2100"
+author: "Niv Yosef"
+date: "2024-05-21"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+    theme: cosmo
+    storyboard: true
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+
+library(tidyverse)
+library(dplyr)
+library(caret)
+library(cluster)
+library(corrplot)
+library(GGally)
+library(ggplot2)
+library(plotly)
+library(AmesHousing)
+library(scales)
+library(corrplot)
+library(DT)
+library(ggthemes)
+
+ames_data <- make_ames()
+
+# Summary statistics by sale price
+summary_stats <- ames_data %>%
+  summarise(
+    Min_Price = min(Sale_Price),
+    Max_Price = max(Sale_Price),
+    Median_Price = median(Sale_Price),
+    Mean_Price = mean(Sale_Price),
+    Total_Houses = n())
+
+#Plot 1 
+#Finding the most correlated numerical factors to sale_price
+
+numeric_data <- select_if(ames_data, is.numeric)
+
+correlation_matrix <- cor(numeric_data, use = "complete.obs")
+
+saleprice_correlation <- correlation_matrix["Sale_Price",]
+saleprice_correlation <- saleprice_correlation[!names(saleprice_correlation) %in% "Sale_Price"]
+
+correlation_df <- data.frame(
+  Feature = names(saleprice_correlation),
+  Correlation = saleprice_correlation
+)
+
+# Heatmap correlation 
+plot1 <- ggplot(correlation_df, aes(x = reorder(Feature, Correlation), y = Correlation)) +
+  geom_tile(aes(fill = Correlation), color = "white") +
+  geom_text(aes(label = round(Correlation, 2)), color = "black", size = 3) +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1, 1), space = "Lab", 
+                       name = "Correlation") +
+  labs(title = "Correlation of Sale Price with Other Features", 
+       x = "Features", y = "Correlation with Sale Price") +
+  theme_gdocs() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 2))
+#Plot 2
+# Boxplot of Sale_Price vs. Overall_Qual 
+plot2 <- ggplot(ames_data, aes(x = as.factor(Overall_Qual), y = Sale_Price)) +
+  geom_boxplot(fill = "blue", color = "black") +
+  labs(title = "Sale Price by Overall Quality", x = "Overall Quality", y = "Sale Price") +
+  theme_gdocs() +
+  theme(axis.text.x = element_text(size = 8))+ 
+  scale_y_continuous(labels = dollar_format())
+
+#Plot 3 
+#Sale price vs. total SF
+
+ames_data <- ames_data %>%
+  mutate(Total_SF = Gr_Liv_Area + Total_Bsmt_SF)
+ames_data <- ames_data %>%
+  mutate(SF_Category = case_when(
+    Total_SF < 1500 ~ "Small",
+    Total_SF >= 1500 & Total_SF < 2500 ~ "Medium",
+    Total_SF >= 2500 ~ "Large"
+  ))
+
+# Boxplot of SalePrice by SF_Category
+plot3 <-ggplot(ames_data, aes(x = SF_Category, y = Sale_Price)) +
+  geom_boxplot(fill = "blue", color = "black") +
+  labs(title = "Sale Price by Total Square Footage Category", x = "Square Footage Category", y = "Sale Price") +
+  theme_gdocs() +
+  theme(axis.text.x = element_text(size = 15),
+        strip.text = element_text(size = 10))+ 
+  scale_y_continuous(labels = dollar_format())
+
+#Linear reg slide 
+#Plot4 
+# Preprocess the Data
+ames_rg <- ames_data %>%
+  mutate_if(is.character, as.factor) %>%
+  filter(!is.na(Sale_Price))
+
+# Split the Data
+set.seed(123)
+trainIndex <- createDataPartition(ames_rg$Sale_Price, p = 0.8, list = FALSE, times = 1)
+ames_rg_train <- ames_rg[trainIndex,]
+ames_rg_test <- ames_rg[-trainIndex,]
+
+# Linear Regression Analysis
+lm_model <- lm(Sale_Price ~ Gr_Liv_Area + Overall_Qual + Year_Built + TotRms_AbvGrd + Neighborhood, data = ames_rg_train)
+summary(lm_model)
+
+# Combined Plot: Sale Price vs. Gr Liv Area colored by Neighborhood
+plot4 <- ggplot(ames_rg_train, aes(x = Gr_Liv_Area, y = Sale_Price, color = Neighborhood)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, aes(group = Neighborhood)) +
+  labs(title = "Sale Price vs. Gr Liv Area by Neighborhood",
+       x = "Gr Liv Area (Sq Ft)",
+       y = "Sale Price",
+       color = "Neighborhood") +
+  theme_gdocs() + 
+  scale_y_continuous(labels = dollar_format())
+
+
+#cluster analyzing slide
+#plot5 
+
+ames_rg1 <- ames_rg %>%
+  mutate_if(is.character, as.factor) %>%
+  filter(!is.na(Sale_Price))
+
+features <- ames_rg1 %>%
+  select(Sale_Price, Gr_Liv_Area, Overall_Qual, Year_Built, TotRms_AbvGrd, Neighborhood)
+
+# Converting Neighborhood and features to numerical values for clustering
+features$Neighborhood <- as.numeric(features$Neighborhood)
+features <- features %>%
+  mutate(across(everything(), as.numeric))
+# Scaling the features
+scaled_features <- scale(features)
+
+# Perform k-means clustering with 3 clusters
+set.seed(123)
+kmeans_model <- kmeans(scaled_features, centers = 3, nstart = 25)
+
+# Add cluster assignment to the original data
+ames_rg1$Cluster <- as.factor(kmeans_model$cluster)
+
+# Visualization of Clusters
+plot5 <- ggplot(ames_rg1, aes(x = Gr_Liv_Area, y = Sale_Price, color = Cluster)) +
+  geom_point(alpha = 0.7) +
+  labs(title = "Clusters of Sale Price vs. Gr Liv Area",
+       x = "Gr Liv Area (Sq Ft)",
+       y = "Sale Price",
+       color = "Cluster") +
+  theme_gdocs() + 
+  scale_y_continuous(labels = dollar_format())
+
+```
+# Header
+<div align="center">
+<br><br>
+
+### <span style="font-size: 36px;">Final Project</span>
+
+<br><br><br><br>
+
+### <span style="font-size: 24px;">Niv Yosef</span>
+
+#### <span style="font-size: 18px;">City College of New York</span>
+
+##### <span style="font-size: 16px;">B2100 Empirical Research Methods</span>
+
+</div>
+
+# Slide 1
+<br><br>
+<span style="font-size: 28px;">The Ames Housing dataset contains various features about houses in Ames, Iowa, and their sale prices. The goal of this analysis is to understand the key factors that influence house prices in this area.</span>
+<br>
+
+```{r}
+datatable(summary_stats, options = list(dom = 't', paging = FALSE, searching = FALSE), 
+          caption = 'Summary Statistics of Ames Housing Dataset') %>%
+  formatCurrency(c('Min_Price', 'Max_Price', 'Median_Price', 'Mean_Price'))
+```
+<br><br><br><br><br>
+<span style="font-size: 22px;"><div align="center">
+
+###  Goals:
+<br>
+1. Explore the dataset and identify important features.
+<br>
+2. Analyze the correlation between different features and sale price.
+<br>
+3. Provide insights and visualizations to help understand the dataset better. </span>
+</div>
+---
+
+# Slide 2
+### <span style="font-size: 20px;">To understand the relationships between different features and sale prices, we started by calculating the correlation matrix. This heatmap shows the correlation of each feature with the sale price, helping us identify which features are most strongly associated with higher or lower prices.</span>
+<br>
+
+```{r fig.width=102, fig.height=200, fig.align='center'}
+ggplotly(plot1)
+
+```
+
+# Slide 3
+
+### The following boxplot chart displays the relationship between the overall quality of houses and their sale prices in the Ames housing dataset.
+<br>
+```{r fig.width=10, fig.height=5, fig.align='center'}
+ggplotly (plot2)
+
+```
+<br><br><br>
+
+### Notes
+<br>1.	Positive Correlation:
+<br>•	There is a clear positive correlation between the overall quality of houses and their sale prices. As the quality rating increases from "Very Poor" to "Very Excellent," the median sale price also increases.
+<br><br>2.	Median Sale Prices:
+<br>•	Houses with lower quality ratings (e.g., "Very Poor," "Poor") have lower median sale prices.
+<br>•	Houses with higher quality ratings (e.g., "Very Good," "Excellent," "Very Excellent") have significantly higher median sale prices.
+<br><br>3.	Variation in Sale Prices:
+<br>•	The interquartile range (IQR), which is represented by the height of each box, indicates the variability in sale prices within each quality category. Higher quality ratings tend to have a wider range of sale prices, suggesting more variability.
+
+# Slide 4
+
+### <span style="font-size: 20px;">After checking the correlation we know that square feet is the biggest driver to the house price. The following table splits the SF data into three different categories: Small<1500sqft ,2500sqft>Medium>1500sqft, and Large>2500sqft </span>
+<br>
+```{r fig.width=10, fig.height=80, fig.align='center'}
+ggplotly (plot3
+          )
+
+```
+
+### Notes
+<br><br> 1. Market Segmentation: The housing market is segmented based on the size of the house, with distinct price ranges for different square footage categories.
+<br><br> 2. Demand for Space: The significant price difference between the categories indicates a strong demand for larger living spaces.
+<br><br> 3.Luxury Segment: The presence of high-priced outliers in the large category suggests a luxury segment within the market that caters to buyers looking for premium features and larger homes.
+<br><br><br><br> <div align="center"><span style="font-size: 18px;"> Further Investigation: </span> </div>
+<br> Further analysis could explore the specific features that contribute to the higher prices of large houses (e.g., number of bedrooms, location, year built).
+
+# Slide 5
+
+### <span style="font-size: 20px;"> Exploring the Relationship Between Living Area, Neighborhood, and Sale Price </span>
+<br>
+```{r fig.width=10, fig.height=80, fig.align='center'}
+ggplotly (plot4)
+
+```
+
+### Notes
+<br><br> 1.Neighborhood Influence:
+<br> - Different neighborhoods have different reaction in how SF impacts the sale price.
+<br> - Higher sale prices are observed in certain neighborhoods, indicating location as a significant factor.
+<br><br> 2.Positive Correlation Across Neighborhoods:
+<br> - There is a general positive correlation between living area and sale price across all neighborhoods.Larger houses tend to sell for higher prices in most neighborhoods.
+<br><br> 3.Inconsistency in Price Trends:
+<br>Some neighborhoods show a steeper increase in sale price with an increase in living area, highlighting the premium placed on larger homes in those areas.
+<br> - The inconsistency suggests that additional factors beyond living area and neighborhood influence house prices.
+
+
+# Slide 6
+
+### <span style="font-size: 20px;"> Clustering Analysis of Ames Housing Data by Living Area and Sale Price </span>
+<br>
+```{r fig.width=10, fig.height=80, fig.align='center'}
+ggplotly (plot5)
+
+```
+
+### Notes
+<br> 1. Cluster Characteristics:
+<br><br> - Cluster 1 (Red): Represents homes with moderate living areas and sale prices. These houses might be in average neighborhoods, offering a balance between size and affordability.
+<br> - Cluster 2 (Green): Likely consists of smaller homes with lower overall quality and fewer total rooms, leading to lower sale prices. These houses might be in less desirable neighborhoods or older areas.
+<br> - Cluster 3 (Blue): Comprises larger homes with higher sale prices, indicating premium features such as newer construction, higher quality, and more desirable neighborhoods.
+
+<br>2. Influence of Neighborhood and Features:
+
+<br>The clustering model considers multiple variables such as SF, Overall_Qual, Year_Built, TotRms_AbvGrd, and Neighborhood. Higher quality and newer homes in desirable neighborhoods tend to cluster together, while older, smaller, and lower-quality homes form separate clusters.
+<br><br>3. Market Segmentation:
+
+<br>The identified clusters reflect different segments of the housing market.
+<br> - Cluster 1 represents entry-level housing
+<br> - Cluster 2 represents mid-range homes
+<br> - Cluster 3 represents high-end properties. 
+<br>This segmentation helps in understanding the distribution and pricing strategies within the housing market in Ames, Iowa.
