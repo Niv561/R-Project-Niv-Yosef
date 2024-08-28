@@ -25,6 +25,6 @@ The project is organized into the following key files:
 
 You can view the full interactive dashboard generated from this project by clicking the link below:
 
-[View the House Price Analysis Dashboard](https://github.com/Niv561/R-Project-Niv-Yosef/blob/main/Niv%20Yosef%20Final%20B2100.html)
+[View the House Price Analysis Dashboard]([https://github.com/Niv561/R-Project-Niv-Yosef/blob/main/Niv%20Yosef%20Final%20B2100.html](https://github.com/niv123/Empirical-Research-B2100/raw/main/Niv%20Yosef%20Final%20B2100.html))
 
 This dashboard provides an in-depth look at the key factors influencing house prices, with interactive visualizations and detailed analysis.
