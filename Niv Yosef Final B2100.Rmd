@@ -180,7 +180,7 @@ plot5 <- ggplot(ames_rg1, aes(x = Gr_Liv_Area, y = Sale_Price, color = Cluster))
 <br>
 
 ```{r}
-datatable(summary_stats, options = list(dom = 't', paging = FALSE, searching = FALSE), 
+datatable(summary_stats, options = list(dom = 't', paging = FALSE, searching = FALSE, autoWidth = TRUE), 
           caption = 'Summary Statistics of Ames Housing Dataset') %>%
   formatCurrency(c('Min_Price', 'Max_Price', 'Median_Price', 'Mean_Price'))
 ```
