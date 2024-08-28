@@ -6,10 +6,8 @@ Welcome to the House Price Analysis and Predictive Modeling project. The primary
 
 The project is organized into the following key files:
 
-- **Niv Yosef Final B2100.Rmd**: The primary R Markdown document that serves as the dashboard. It includes the complete analysis, data processing, statistical modeling, and visualizations. This file can be rendered into an HTML report.
-- **Niv Yosef Final B2100.R**: The R script containing supporting code, functions, or additional analysis that complements the R Markdown file.
-- **README.md**: This file provides an overview of the project, including the title, introduction, installation instructions, and project structure.
-- **.gitignore**: Specifies files and directories to be ignored by Git to keep the repository clean.
+- **Final B2100.Rmd**: The primary R Markdown document that serves as the dashboard. It includes the complete analysis, data processing, statistical modeling, and visualizations. This file can be rendered into an HTML report.
+- **Final B2100.R**: The R script containing supporting code, functions, or additional analysis that complements the R Markdown file.
 
 ### Key Sections in the R Markdown (Rmd) File:
 1. **Data Exploration**: Initial exploration and summary of the dataset.
