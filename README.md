@@ -19,6 +19,14 @@ The project is organized into the following key files:
 5. **Dashboard**: Interactive elements and the final HTML dashboard.
 6. **Conclusion**: Summary of findings and implications.
 
+## Interactive Dashboard
+
+You can view the full interactive dashboard generated from this project by clicking the link below:
+
+[View the House Price Analysis Dashboard](https://github.com/Niv561/R-Project-Niv-Yosef/blob/main/Niv%20Yosef%20Final%20B2100.html)
+
+This dashboard provides an in-depth look at the key factors influencing house prices, with interactive visualizations and detailed analysis.
+
 ### Key Sections in the R Script (R File):
 1. **Functions**: Custom functions used in the analysis.
 2. **Extended Analysis**: Additional scripts or exploratory code that supports the primary analysis.
